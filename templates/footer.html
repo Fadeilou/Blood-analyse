@@ -1,0 +1,70 @@
+{# templates/footer.html #}
+<footer class="py-12 bg-white xl:py-10 dark:bg-gray-800">
+    <div class="container px-4 mx-auto xl:px-0">
+        <div class="grid gap-12 xl:grid-cols-6 xl:gap-24">
+            <div class="col-span-2">
+                <a href="{{ url_for('routes.index_redirect_dashboard') }}" class="flex mr-4">
+                    <!-- <img src="{{ url_for('static', filename='logo.svg') }}" class="h-8 mr-3" alt="Logo Analyse Médicale" /> {# Remplacez 'logo.svg' par le chemin vers votre logo si vous en avez un #} -->
+                    <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Analyse Médicale</span>
+                </a>
+                <p class="max-w-lg mt-4 text-gray-500 dark:text-gray-400">Plateforme web pour l'analyse d'images médicales, développée avec Flask et Tailwind CSS.</p> {# Description de votre plateforme #}
+            </div>
+            <div>
+                <h3 class="mb-6 text-sm font-semibold text-gray-600 uppercase dark:text-white">Ressources</h3>
+                <ul>
+                    <li class="mb-4">
+                        <a href="{{ url_for('routes.dashboard') }}" class="font-normal text-gray-600 hover:underline dark:text-gray-400">Tableau de Bord</a> {# Lien vers le tableau de bord #}
+                    </li>
+                    <li class="mb-4">
+                        <a href="{{ url_for('routes.analyses_list') }}" class="font-normal text-gray-600 hover:underline dark:text-gray-400">Liste des Analyses</a> {# Lien vers la liste des analyses #}
+                    </li>
+                    <li class="mb-4">
+                        <a href="{{ url_for('routes.profile') }}" class="font-normal text-gray-600 hover:underline dark:text-gray-400">Profil</a> {# Lien vers le profil #}
+                    </li>
+                    <li>
+                        <a href="{{ url_for('routes.login') }}" class="font-normal text-gray-600 hover:underline dark:text-gray-400">Connexion</a> {# Lien vers la page de connexion #}
+                    </li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="mb-6 text-sm font-semibold text-gray-600 uppercase dark:text-white">Aide et Support</h3>
+                <ul>
+                    <li class="mb-4">
+                        <a href="#" class="font-normal text-gray-600 hover:underline dark:text-gray-400">Documentation</a> {# Lien vers la documentation (à remplacer) #}
+                    </li>
+                    <li>
+                        <a href="#" class="font-normal text-gray-600 hover:underline dark:text-gray-400">Support Technique</a> {# Lien vers le support technique (à remplacer) #}
+                    </li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="mb-6 text-sm font-semibold text-gray-600 uppercase dark:text-white">Suivez-nous</h3>
+                <ul>
+                    <li class="mb-4">
+                        <a href="#" class="font-normal text-gray-600 hover:underline dark:text-gray-400">GitHub</a> {# Lien vers GitHub (à remplacer) #}
+                    </li>
+                    <li>
+                        <a href="#" class="font-normal text-gray-600 hover:underline dark:text-gray-400">Twitter</a> {# Lien vers Twitter (à remplacer) #}
+                    </li>
+                    <li>
+                        <a href="#" class="font-normal text-gray-600 hover:underline dark:text-gray-400">Facebook</a> {# Lien vers Facebook (à remplacer) #}
+                    </li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="mb-6 text-sm font-semibold text-gray-600 uppercase dark:text-white">Légal</h3>
+                <ul>
+                    <li class="mb-4">
+                        <a href="#" class="font-normal text-gray-600 hover:underline dark:text-gray-400">Politique de Confidentialité</a> {# Lien vers la politique de confidentialité (à remplacer) #}
+                    </li>
+                    <li>
+                        <a href="#" class="font-normal text-gray-600 hover:underline dark:text-gray-400">Conditions d'Utilisation</a> {# Lien vers les conditions d'utilisation (à remplacer) #}
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <hr class="my-8 border-gray-200 lg:my-12 dark:border-gray-700">
+        <span class="block text-center text-gray-600 dark:text-gray-400">© 2024 Analyse Médicale - Tous droits réservés. {# Note de copyright mise à jour #}
+        </span>
+    </div>
+</footer>

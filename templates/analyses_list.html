@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Liste des Analyses{% endblock %}
+
+{% block content %}
+    <div class="bg-white p-8 rounded shadow-md">
+        <h1 class="text-2xl font-bold mb-6 text-gray-800">Liste des Analyses</h1>
+
+        {% if analyses %}
+            <ul class="divide-y divide-gray-200">
+                {% for analyse in analyses %}
+                    <li class="py-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">
+                                    Patient: {{ analyse.patient.nom }} {{ analyse.patient.prenom }}
+                                </p>
+                                <p class="text-sm text-gray-500 truncate">
+                                    Date: {{ analyse.date_analyse.strftime('%d-%m-%Y %H:%M') }}
+                                </p>
+                            </div>
+                            <div class="ml-4 flex-shrink-0">
+                                <button class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    Voir Détails
+                                </button>
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Aucune analyse enregistrée pour le moment.</p>
+        {% endif %}
+    </div>
+{% endblock %}
