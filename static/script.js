@@ -111,4 +111,47 @@ document.addEventListener('DOMContentLoaded', () => {
         uploadSection.classList.add('hidden');
         imagePreviewSection.classList.add('hidden');
     }
+
+
+    const detailButtons = document.querySelectorAll('.detail-button');
+
+    detailButtons.forEach(button => {
+        button.addEventListener('click', async (event) => {
+            const analyseId = button.dataset.analyseId;
+            const modal = document.getElementById(`analyse-detail-modal-${analyseId}`);
+            const patientNameSpan = document.getElementById(`modal-patient-name-${analyseId}`);
+            const patientDateNaissanceSpan = document.getElementById(`modal-patient-date-naissance-${analyseId}`);
+            const analyseDateSpan = document.getElementById(`modal-analyse-date-${analyseId}`);
+            const testResultSpan = document.getElementById(`modal-test-result-${analyseId}`);
+            const anomalieTypeSpan = document.getElementById(`modal-anomalie-type-${analyseId}`);
+            const recommandationSpan = document.getElementById(`modal-recommandation-${analyseId}`);
+            const analyseImage = document.getElementById(`modal-analyse-image-${analyseId}`);
+
+
+            try {
+                const response = await fetch(`/analyse_details/${analyseId}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                patientNameSpan.textContent = `${data.patient_nom} ${data.patient_prenom}`;
+                patientDateNaissanceSpan.textContent = data.patient_date_naissance || 'Non renseignée'; // Gérer si date de naissance est null
+                analyseDateSpan.textContent = new Date(data.date_analyse).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                testResultSpan.textContent = data.test_positif ? 'Positif' : 'Négatif';
+                anomalieTypeSpan.textContent = data.type_anomalie || 'N/A (Test négatif)'; // Gérer si pas d'anomalie
+                recommandationSpan.textContent = data.recommandation || 'N/A'; // Gérer si pas de recommandation
+                analyseImage.src = `/static/uploaded_images/${data.image_filename}`; // Assurez-vous que le chemin est correct
+
+                // Show modal (using Flowbite's method - adjust if you're not using Flowbite)
+                modal.classList.remove('hidden');
+                modal.setAttribute('aria-modal', 'true');
+                modal.setAttribute('role', 'dialog');
+
+            } catch (error) {
+                console.error("Erreur lors de la récupération des détails de l'analyse:", error);
+                alert("Erreur lors du chargement des détails de l'analyse. Veuillez réessayer.");
+            }
+        });
+    });
 });
