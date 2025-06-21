@@ -10,6 +10,7 @@ from forms import RegistrationForm
 from login_form import LoginForm
 import cv2
 import numpy as np
+import traceback
 # Supprimer les imports liés à TensorFlow/Keras si AlexNet n'est plus utilisé
 # import tensorflow as tf
 # from tensorflow.keras.preprocessing import image
@@ -31,7 +32,7 @@ ALLOWED_EXTENSIONS_IMAGES = {'png', 'jpg', 'jpeg'}
 # --- !!! METTEZ ICI LE CHEMIN VERS VOTRE MODÈLE .pt !!! ---
 YOLO_MODEL_PATH = 'best.pt' # ou 'models/best.pt' etc.
 CONFIDENCE_THRESHOLD_YOLO = 0.4 # Seuil de confiance pour les détections YOLO
-CLASS_NAMES_YOLO = ["DREPANOCYTES", "ELLIPTOCYTES", "SCHIZOCYTES"] # Doit correspondre à votre entraînement
+CLASS_NAMES_YOLO = ["DREPANOCYTES", "ELLIPTOCYTES", "SCHIZOCYTES", "SAINS"] # Ajout de la classe SAINS
 
 # --- NOUVEAU: Chargement du modèle YOLOv8 (variable globale) ---
 model_yolo = None
@@ -226,20 +227,30 @@ def analyse_image_yolo(image_file_content, original_filename):
                     else:
                         print(f"Warning: Invalid class_id {class_id} detected in YOLO results.")
 
-        # Déterminer le statut et la recommandation (logique inchangée)
-        # ... (le reste de la logique pour final_status, recommandation, etc.) ...
+        # Déterminer le statut et la recommandation (NOUVELLE LOGIQUE)
         if num_detections == 0:
-            final_status = "Sain"
-            recommandation = "Aucune cellule malade détectée. Test négatif."
+            # Aucune détection du tout - cas d'erreur ou image non analysable
+            final_status = "Indéterminé"
+            recommandation = "Aucune cellule détectée. Veuillez vérifier la qualité de l'image."
             detected_diseases_list = []
+        elif "SAINS" in detected_diseases:
+            # Classe SAINS détectée - priorité donnée au statut sain même si d'autres classes sont présentes
+            final_status = "Sain"
+            recommandation = "Cellules saines détectées. Test négatif."
+            detected_diseases_list = ["SAINS"]
         else:
+            # Seulement des maladies détectées
             final_status = "Malade"
             detected_diseases_list = sorted(list(detected_diseases))
             reco_parts = []
-            if "DREPANOCYTES" in detected_diseases_list: reco_parts.append("Présence de drépanocytes. Électrophorèse de l'hémoglobine suggérée.")
-            if "ELLIPTOCYTES" in detected_diseases_list: reco_parts.append("Présence d'elliptocytes. Examens complémentaires possibles.")
-            if "SCHIZOCYTES" in detected_diseases_list: reco_parts.append("Présence de schizocytes. Investigation approfondie nécessaire.")
-            if not reco_parts: reco_parts.append("Cellules anormales détectées. Examen médical requis.")
+            if "DREPANOCYTES" in detected_diseases_list: 
+                reco_parts.append("Présence de drépanocytes. Électrophorèse de l'hémoglobine suggérée.")
+            if "ELLIPTOCYTES" in detected_diseases_list: 
+                reco_parts.append("Présence d'elliptocytes. Examens complémentaires nécessaires.")
+            if "SCHIZOCYTES" in detected_diseases_list: 
+                reco_parts.append("Présence de schizocytes. Examens complémentaires nécessaires.")
+            if not reco_parts: 
+                reco_parts.append("Cellules anormales détectées. Examen médical requis.")
             recommandation = " ".join(reco_parts)
 
 
