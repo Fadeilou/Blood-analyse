@@ -49,34 +49,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Écouteur d'événement sur le changement de l'input type="file" (image_upload) ---
     imageUploadInput.addEventListener('change', () => {
-        console.log("imageUploadInput.addEventListener('change') déclenché!");
         const file = imageUploadInput.files[0];
         if (file) {
-            console.log("Fichier sélectionné:", file);
             const reader = new FileReader();
             reader.onload = (e) => {
-                console.log("FileReader.onload exécuté!");
-                console.log("Data URL:", e.target.result);
                 imagePreviewElement.src = e.target.result;
-                uploadSection.classList.add('hidden'); // Cache la section de téléchargement
+                uploadSection.classList.add('hidden');
                 imagePreviewSection.classList.remove('hidden');
                 analyseButton.classList.remove('hidden');
-                console.log("Sections UI mises à jour (uploadSection caché, imagePreviewSection et analyseButton affichés)");
             };
             reader.readAsDataURL(file);
-            console.log("FileReader.readAsDataURL(file) appelé!");
         } else {
-            console.log("Aucun fichier sélectionné.");
+            // Si aucun fichier sélectionné, on réaffiche la section d'upload et on cache la preview
+            uploadSection.classList.remove('hidden');
+            imagePreviewSection.classList.add('hidden');
+            analyseButton.classList.add('hidden');
         }
     });
 
 
-    // --- Écouteur d'événement sur le bouton "Analyser l'image" (MODIFIÉ) ---
-    analyseButton.addEventListener('click', () => {
-        console.log("Bouton 'Analyser l'image' cliqué!");
+    // --- Écouteur d'événement sur le bouton "Analyser l'image" (corrigé) ---
+    analyseButton.addEventListener('click', (e) => {
+        if (!imagePreviewElement.src || imagePreviewElement.src === '#') {
+            e.preventDefault();
+            alert("Veuillez d'abord sélectionner une image.");
+            return;
+        }
         imagePreviewSection.classList.add('hidden');
         loadingIndicator.classList.remove('hidden');
-        uploadForm.submit(); // Soumission du formulaire pour l'analyse (garde le comportement précédent)
+        uploadForm.submit();
     });
 
     // --- Écouteur d'événement sur le bouton "Sauvegarder les résultats" (MODIFIÉ) ---

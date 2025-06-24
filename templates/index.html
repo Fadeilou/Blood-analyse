@@ -37,7 +37,7 @@
 
     {% if resultat_analyse %}
         <div id="resultats-section" class="mt-8 p-6 border rounded dark:bg-gray-700 dark:border-gray-700">
-            <h2 class="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">Étape 3: Résultats de l'Analyse YOLOv8</h2>
+            <h2 class="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">Étape 3: Résultats de l'Analyse</h2>
 
             {# Affichage Statut : Sain ou Malade #}
             {% if resultat_analyse.status == 'Malade' %}
@@ -91,7 +91,7 @@
                 <button type="button" id="save-button" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Sauvegarder les résultats</button>
             </div>
 
-            {# Formulaire Infos Patient (MODIFIÉ pour passer les infos YOLO) #}
+            {# Formulaire Infos Patient #}
             <form method="post" action="{{ url_for('routes.save_analysis') }}" id="patient-info-form-section" class="mt-8 hidden">
                 <h2 class="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">Étape 4: Informations Patient (pour sauvegarde)</h2>
                 <div class="bg-gray-100 p-4 rounded border dark:bg-gray-700 dark:border-gray-600">
@@ -111,7 +111,7 @@
                         <input type="date" id="patient_date_naissance" name="patient_date_naissance" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline dark:bg-gray-800 dark:border-gray-700 dark:text-white">
                     </div>
                 </div>
-                {# Champs cachés pour transmettre les infos YOLO #}
+                {# Champs cachés pour transmettre les infos d'analyse #}
                 <input type="hidden" name="output_image_filename" value="{{ image_filename }}"> {# Nom fichier RÉSULTAT #}
                 <input type="hidden" name="status" value="{{ resultat_analyse.status }}"> {# "Sain" ou "Malade" #}
                 <input type="hidden" name="diseases" value="{{ resultat_analyse.diseases | join(',') }}"> {# Liste des maladies séparées par virgule #}
