@@ -19,7 +19,7 @@ import traceback
 import pdb # Gardé si vous l'utilisez pour le débogage
 
 # --- NOUVEAU: Importer YOLO ---
-from ultralytics import YOLO as _MODELE_ANALYSE
+from ultralytics import YOLO
 
 routes = Blueprint('routes', __name__)
 
@@ -28,32 +28,36 @@ UPLOAD_FOLDER = 'static/uploaded_images'
 RESULTS_FOLDER = 'static/results_images'
 ALLOWED_EXTENSIONS_IMAGES = {'png', 'jpg', 'jpeg'}
 
-# --- NOUVEAU: Configuration du modèle d'analyse ---
-MODELE_ANALYSE_PATH = 'best.pt'
-SEUIL_CONFIANCE = 0.4
-NOMS_CLASSES = ["DREPANOCYTES", "ELLIPTOCYTES", "SCHIZOCYTES", "SAINS"]
+# --- NOUVEAU: Configuration YOLOv8 ---
+# --- !!! METTEZ ICI LE CHEMIN VERS VOTRE MODÈLE .pt !!! ---
+YOLO_MODEL_PATH = 'best.pt' # ou 'models/best.pt' etc.
+CONFIDENCE_THRESHOLD_YOLO = 0.4 # Seuil de confiance pour les détections YOLO
+CLASS_NAMES_YOLO = ["DREPANOCYTES", "ELLIPTOCYTES", "SCHIZOCYTES", "SAINS"] # Ajout de la classe SAINS
 
-# --- Chargement du modèle d'analyse (variable globale) ---
-_modele_analyse = None
-
-def charger_modele_analyse():
-    global _modele_analyse
+# --- NOUVEAU: Chargement du modèle YOLOv8 (variable globale) ---
+model_yolo = None
+def load_yolo_model():
+    global model_yolo
     try:
+        # Créer le dossier de résultats s'il n'existe pas
         if not os.path.exists(RESULTS_FOLDER):
             os.makedirs(RESULTS_FOLDER)
             print(f"Dossier de résultats créé: {RESULTS_FOLDER}")
-        if os.path.exists(MODELE_ANALYSE_PATH):
-            _modele_analyse = _MODELE_ANALYSE(MODELE_ANALYSE_PATH)
-            print(f"Modèle d'analyse chargé avec succès depuis: {MODELE_ANALYSE_PATH}")
-        else:
-            print(f"ERREUR: Fichier modèle non trouvé à l'emplacement: {MODELE_ANALYSE_PATH}")
-            _modele_analyse = None
-    except Exception as e:
-        print(f"Erreur lors du chargement du modèle d'analyse: {e}")
-        _modele_analyse = None
 
-# Charger le modèle au démarrage
-charger_modele_analyse()
+        if os.path.exists(YOLO_MODEL_PATH):
+            model_yolo = YOLO(YOLO_MODEL_PATH)
+            # Vous pouvez optionnellement faire une inférence rapide pour "chauffer" le modèle si nécessaire
+            # model_yolo.predict(np.zeros((640, 640, 3)), verbose=False)
+            print(f"Modèle YOLOv8 chargé avec succès depuis: {YOLO_MODEL_PATH}")
+        else:
+            print(f"ERREUR: Fichier modèle YOLOv8 non trouvé à l'emplacement: {YOLO_MODEL_PATH}")
+            model_yolo = None
+    except Exception as e:
+        print(f"Erreur lors du chargement du modèle YOLOv8: {e}")
+        model_yolo = None
+
+# Charger le modèle YOLO au démarrage
+load_yolo_model()
 
 # --- Supprimer ou commenter l'ancien chargement du modèle CNN ---
 # model_cnn = None
@@ -136,11 +140,11 @@ def analyse_detail_page(analyse_id):
 def analyse():
     resultat_analyse = None
     patient_info = {}
-    image_filename_result = None
+    image_filename_result = None # Nom du fichier image RÉSULTAT (avec masques)
 
     if request.method == 'POST':
-        if _modele_analyse is None:
-            flash("Erreur: Le modèle d'analyse n'est pas chargé.", 'danger')
+        if model_yolo is None:
+            flash("Erreur: Le modèle d'analyse YOLOv8 n'est pas chargé.", 'danger')
             return render_template('index.html', title='Analyse', dashboard_content=True)
 
         if 'image_upload' not in request.files:
@@ -151,92 +155,120 @@ def analyse():
                 flash('Aucun fichier image sélectionné.', 'warning')
             elif allowed_image_file(image_file.filename):
                 try:
+                    # Lire le contenu pour l'analyse et pour une sauvegarde potentielle
                     file_content = image_file.read()
                     original_filename = secure_filename(image_file.filename)
-                    resultat_analyse = analyser_image(file_content, original_filename)
-                    image_filename_result = resultat_analyse.get('output_image_filename')
+
+                    # --- NOUVEAU: Analyse de l'image avec YOLOv8 ---
+                    resultat_analyse = analyse_image_yolo(file_content, original_filename)
+                    image_filename_result = resultat_analyse.get('output_image_filename') # Récupère nom fichier résultat
+
+                    # Optionnel: Sauvegarder l'image originale si besoin (non nécessaire pour l'analyse elle-même)
+                    # original_image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], original_filename)
+                    # with open(original_image_path, 'wb') as f:
+                    #     f.write(file_content)
+
                 except Exception as e:
                     flash(f"Erreur lors de l'analyse de l'image: {e}", 'danger')
-                    print(f"Traceback de l'erreur d'analyse: {traceback.format_exc()}")
+                    print(f"Traceback de l'erreur d'analyse: {traceback.format_exc()}") # Log détaillé
                     resultat_analyse = None
                     image_filename_result = None
             else:
                 flash('Type de fichier non autorisé.', 'danger')
 
+    # Passe le nom du fichier *résultat* au template
     return render_template('index.html',
                            resultat_analyse=resultat_analyse,
                            patient_info=patient_info,
                            title='Analyse',
                            dashboard_content=True,
-                           image_filename=image_filename_result)
+                           image_filename=image_filename_result) # Utilise image_filename_result ici
 
 
-def analyser_image(image_file_content, original_filename):
-    global _modele_analyse
-    if _modele_analyse is None:
-        raise Exception("Le modèle d'analyse n'est pas chargé.")
+def analyse_image_yolo(image_file_content, original_filename):
+    global model_yolo
+    if model_yolo is None:
+        raise Exception("Le modèle YOLOv8 n'est pas chargé.")
 
     try:
+        # Décoder l'image depuis les bytes
         nparr = np.frombuffer(image_file_content, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         if img is None:
             raise ValueError("Impossible de décoder l'image.")
 
-        results = _modele_analyse.predict(img, conf=SEUIL_CONFIANCE, verbose=False)
+        # Exécuter l'inférence YOLOv8
+        results = model_yolo.predict(img, conf=CONFIDENCE_THRESHOLD_YOLO, verbose=False)
 
         num_detections = 0
         detected_diseases = set()
-        output_img_array = img.copy()
+        output_img_array = img.copy() # Commencer avec l'image originale
 
         if results and hasattr(results[0], 'masks') and results[0].masks is not None:
             num_detections = len(results[0].boxes)
             if num_detections > 0:
+                # --- MODIFICATION ICI ---
+                # Utiliser plot() en désactivant les boîtes et les labels
                 output_img_array = results[0].plot(
-                    boxes=False,
-                    labels=False,
-                    masks=True
+                    boxes=False,   # Ne pas dessiner les rectangles
+                    labels=False,  # Ne pas dessiner les textes (classe + confiance)
+                    masks=True     # Dessiner les masques (par défaut mais explicite)
+                    # Vous pouvez garder d'autres paramètres de style si vous le souhaitez
+                    # line_width=..., mask_alpha=..., etc.
                 )
+                # -----------------------
+
+                # Récupérer les classes détectées (la logique reste la même)
                 for box in results[0].boxes:
                     class_id = int(box.cls.item())
-                    if 0 <= class_id < len(NOMS_CLASSES):
-                        disease_name = NOMS_CLASSES[class_id]
+                    if 0 <= class_id < len(CLASS_NAMES_YOLO):
+                        disease_name = CLASS_NAMES_YOLO[class_id]
                         detected_diseases.add(disease_name)
                     else:
-                        print(f"Warning: Invalid class_id {class_id} detected in results.")
+                        print(f"Warning: Invalid class_id {class_id} detected in YOLO results.")
 
+        # Déterminer le statut et la recommandation (NOUVELLE LOGIQUE)
         if num_detections == 0:
+            # Aucune détection du tout - cas d'erreur ou image non analysable
             final_status = "Indéterminé"
             recommandation = "Aucune cellule détectée. Veuillez vérifier la qualité de l'image."
             detected_diseases_list = []
         elif "SAINS" in detected_diseases:
+            # Classe SAINS détectée - priorité donnée au statut sain même si d'autres classes sont présentes
             final_status = "Sain"
             recommandation = "Cellules saines détectées. Test négatif."
             detected_diseases_list = ["SAINS"]
         else:
+            # Seulement des maladies détectées
             final_status = "Malade"
             detected_diseases_list = sorted(list(detected_diseases))
             reco_parts = []
-            if "DREPANOCYTES" in detected_diseases_list:
+            if "DREPANOCYTES" in detected_diseases_list: 
                 reco_parts.append("Présence de drépanocytes. Électrophorèse de l'hémoglobine suggérée.")
-            if "ELLIPTOCYTES" in detected_diseases_list:
+            if "ELLIPTOCYTES" in detected_diseases_list: 
                 reco_parts.append("Présence d'elliptocytes. Examens complémentaires nécessaires.")
-            if "SCHIZOCYTES" in detected_diseases_list:
+            if "SCHIZOCYTES" in detected_diseases_list: 
                 reco_parts.append("Présence de schizocytes. Examens complémentaires nécessaires.")
-            if not reco_parts:
+            if not reco_parts: 
                 reco_parts.append("Cellules anormales détectées. Examen médical requis.")
             recommandation = " ".join(reco_parts)
 
+
+        # Sauvegarder l'image résultat (avec seulement les masques maintenant)
+        # ... (logique de sauvegarde inchangée) ...
         base, ext = os.path.splitext(original_filename)
         unique_id = uuid.uuid4().hex[:8]
         output_filename = f"result_{base}_{unique_id}{ext}"
         output_image_path = os.path.join(current_app.config['RESULTS_FOLDER'], output_filename)
 
         try:
+            # Important: output_img_array contient maintenant l'image AVEC seulement les masques
             cv2.imwrite(output_image_path, output_img_array)
-            print(f"Image résultat sauvegardée dans: {output_image_path}")
+            print(f"Image résultat (masques seulement) sauvegardée dans: {output_image_path}")
         except Exception as e_save:
             print(f"ERREUR lors de la sauvegarde de l'image résultat {output_filename}: {e_save}")
             output_filename = None
+
 
         return {
             "status": final_status,
@@ -246,9 +278,9 @@ def analyser_image(image_file_content, original_filename):
         }
 
     except Exception as e:
-        print(f"Erreur dans analyser_image: {e}")
+        print(f"Erreur dans analyse_image_yolo: {e}")
         print(f"Traceback: {traceback.format_exc()}")
-        raise Exception(f"Erreur interne lors de l'analyse: {e}")
+        raise Exception(f"Erreur interne lors de l'analyse YOLOv8: {e}")
 
 # --- Supprimer l'ancienne fonction analyse_image CNN ---
 # def analyse_image(image_file): ...
