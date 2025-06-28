@@ -3,11 +3,16 @@ from routes import routes
 from models import db # Importe l'instance de base de données depuis models.py
 from flask_login import LoginManager
 import os
-
+from config import config
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'une_cle_secrete_tres_secrete'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+
+# Configuration selon l'environnement
+config_name = os.environ.get('FLASK_ENV', 'default')
+if os.environ.get('RAILWAY_ENVIRONMENT'):
+    config_name = 'production'
+
+app.config.from_object(config[config_name])
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # app.config['UPLOAD_FOLDER'] = 'static/uploaded_images' # Configure UPLOAD_FOLDER here
 
@@ -28,6 +33,31 @@ login_manager.init_app(app)
 
 app.register_blueprint(routes)
 
+# Healthcheck endpoint pour Railway
+@app.route('/health')
+def health_check():
+    """Endpoint de santé pour Railway"""
+    try:
+        # Vérifier la base de données
+        with app.app_context():
+            db.engine.execute('SELECT 1')
+        
+        # Vérifier les modèles
+        from model_config import ModelConfig
+        available_models = ModelConfig.list_available_models()
+        
+        return {
+            'status': 'healthy',
+            'database': 'connected',
+            'models_available': len(available_models),
+            'models': [m['name'] for m in available_models]
+        }, 200
+    except Exception as e:
+        return {
+            'status': 'unhealthy',
+            'error': str(e)
+        }, 500
+
 from models import User, Patient, AnalyseResult # noqa
 
 @login_manager.user_loader
@@ -42,4 +72,5 @@ def create_database():
 
 if __name__ == '__main__':
     create_database()
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
