@@ -1,0 +1,34 @@
+# Core Flask dependencies
+Flask==3.1.0
+Flask-Login==0.6.3
+Flask-SQLAlchemy==3.1.1
+Flask-WTF==1.2.2
+WTForms==3.2.1
+Werkzeug==3.1.3
+
+# Database
+SQLAlchemy==2.0.38
+
+# Web server
+gunicorn==21.2.0
+
+# Core ML/AI libraries - versions compatibles Railway
+torch==2.5.1
+torchvision==0.20.1
+ultralytics==8.3.105
+opencv-python-headless==4.10.0.84
+
+# Image processing and visualization  
+Pillow==11.1.0
+matplotlib==3.9.2
+numpy==1.26.4
+pandas==2.2.3
+seaborn==0.13.2
+
+# Utilities
+requests==2.32.3
+tqdm==4.67.1
+PyYAML==6.0.2
+click==8.1.8
+python-dateutil==2.9.0.post0
+pytz==2025.2
