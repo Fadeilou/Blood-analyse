@@ -1,3 +1,4 @@
 chmod +x /home/fadel/Workspaces/analyse_medicale_flask/start.sh
 chmod +x /home/fadel/Workspaces/analyse_medicale_flask/test-local.sh
 chmod +x /home/fadel/Workspaces/analyse_medicale_flask/deploy-railway.sh /home/fadel/Workspaces/analyse_medicale_flask/init.sh /home/fadel/Workspaces/analyse_medicale_flask/start.sh /home/fadel/Workspaces/analyse_medicale_flask/test-local.sh
+chmod +x /home/fadel/Workspaces/analyse_medicale_flask/check-deploy.sh
